@@ -72,35 +72,53 @@ const FoodDetails: React.FC = () => {
   const routeParams = route.params as Params;
 
   useEffect(() => {
-    async function loadFood(): Promise<void> {
-      // Load a specific food with extras based on routeParams id
-    }
-
-    loadFood();
+    const { id } = routeParams;
+    api.get<Food>(`foods/${id}`)
+      .then((resp) => {
+        setFood(resp.data);
+        setExtras(resp.data.extras.map((extra) => ({ ...extra, quantity: 0 })));
+      });
   }, [routeParams]);
 
   function handleIncrementExtra(id: number): void {
-    // Increment extra quantity
+    const newExtras = extras.map((extra) => {
+      if (extra.id === id) {
+        return { ...extra, quantity: extra.quantity + 1 };
+      }
+      return extra;
+    });
+    setExtras(newExtras);
   }
 
   function handleDecrementExtra(id: number): void {
-    // Decrement extra quantity
+    const newExtras = extras.map((extra) => {
+      if (extra.id === id && extra.quantity > 0) {
+        return { ...extra, quantity: extra.quantity - 1 };
+      }
+      return extra;
+    });
+    setExtras(newExtras);
   }
 
   function handleIncrementFood(): void {
-    // Increment food quantity
+    setFoodQuantity(foodQuantity + 1);
   }
 
   function handleDecrementFood(): void {
-    // Decrement food quantity
+    if (foodQuantity > 1) {
+      setFoodQuantity(foodQuantity - 1);
+    }
   }
 
   const toggleFavorite = useCallback(() => {
-    // Toggle if food is favorite or not
-  }, [isFavorite, food]);
+    setIsFavorite((state) => !state);
+  }, []);
 
   const cartTotal = useMemo(() => {
-    // Calculate cartTotal
+    let value = 0;
+    extras.forEach((extra) => { value += extra.value * extra.quantity; });
+    value = (value + food.price) * foodQuantity;
+    return formatValue(value);
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
@@ -151,7 +169,7 @@ const FoodDetails: React.FC = () => {
         </FoodsContainer>
         <AdditionalsContainer>
           <Title>Adicionais</Title>
-          {extras.map(extra => (
+          {extras.map((extra) => (
             <AdittionalItem key={extra.id}>
               <AdittionalItemText>{extra.name}</AdittionalItemText>
               <AdittionalQuantity>
